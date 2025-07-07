@@ -1,4 +1,4 @@
-# Spotify Cloud Simulator - Phiên bản Tách riêng Server/Client
+# Spotify Cloud Simulator
 
 Dự án này đã được tách thành 2 ứng dụng riêng biệt:
 - **Server App** (Port 5001): Quản lý server socket và lưu trữ file
