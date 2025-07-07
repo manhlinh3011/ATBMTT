@@ -1,0 +1,402 @@
+{% extends "server_base.html" %}
+
+{% block title %}Server Dashboard - Spotify Cloud Server{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Header -->
+    <div class="col-12 mb-4">
+        <div class="card bg-gradient-primary text-white">
+            <div class="card-body text-center py-5">
+                <h1 class="display-4 mb-3">
+                    <i class="fas fa-server me-3"></i>
+                    Spotify Cloud Server
+                </h1>
+                <p class="lead mb-4">
+                    Quản lý Server Socket và Lưu trữ File Âm thanh
+                </p>
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <i class="fas fa-network-wired fa-2x mb-2"></i>
+                        <h6>Socket TCP</h6>
+                        <small>Port 8888</small>
+                    </div>
+                    <div class="col-md-3">
+                        <i class="fas fa-database fa-2x mb-2"></i>
+                        <h6>File Storage</h6>
+                        <small>Quản lý file</small>
+                    </div>
+                    <div class="col-md-3">
+                        <i class="fas fa-shield-alt fa-2x mb-2"></i>
+                        <h6>Security</h6>
+                        <small>Bảo mật cao</small>
+                    </div>
+                    <div class="col-md-3">
+                        <i class="fas fa-chart-line fa-2x mb-2"></i>
+                        <h6>Monitoring</h6>
+                        <small>Theo dõi hoạt động</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Server Status -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-server me-2"></i>
+                    Trạng thái Server
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="status-indicator me-3" id="server-status">
+                        <span class="badge bg-secondary">Đang kiểm tra...</span>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">Socket Server</h6>
+                        <small class="text-muted">localhost:8888</small>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-sm me-2" onclick="startServer()">
+                    <i class="fas fa-play me-1"></i>Khởi động
+                </button>
+                <button class="btn btn-danger btn-sm me-2" onclick="stopServer()">
+                    <i class="fas fa-stop me-1"></i>Dừng
+                </button>
+                <button class="btn btn-info btn-sm" onclick="checkServerStatus()">
+                    <i class="fas fa-sync me-1"></i>Kiểm tra
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Server Info -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Thông tin Server
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-network-wired text-primary me-2"></i>
+                            <div>
+                                <small class="text-muted">Protocol</small>
+                                <div><strong>TCP Socket</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-plug text-success me-2"></i>
+                            <div>
+                                <small class="text-muted">Port</small>
+                                <div><strong>8888</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-folder text-warning me-2"></i>
+                            <div>
+                                <small class="text-muted">Storage</small>
+                                <div><strong>uploads/</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-clock text-info me-2"></i>
+                            <div>
+                                <small class="text-muted">Uptime</small>
+                                <div><strong id="server-uptime">--</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Statistics -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    Thống kê File
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="stat-item">
+                            <h3 class="text-primary" id="total-files">0</h3>
+                            <small class="text-muted">Tổng file</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-item">
+                            <h3 class="text-success" id="total-size">0 MB</h3>
+                            <small class="text-muted">Tổng dung lượng</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-item">
+                            <h3 class="text-info" id="avg-size">0 KB</h3>
+                            <small class="text-muted">Trung bình</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Thao tác nhanh
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('files') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-folder me-2"></i>
+                        Quản lý File
+                    </a>
+                    <a href="{{ url_for('logs') }}" class="btn btn-outline-info">
+                        <i class="fas fa-list me-2"></i>
+                        Xem Logs
+                    </a>
+                    <button class="btn btn-outline-success" onclick="refreshStats()">
+                        <i class="fas fa-sync me-2"></i>
+                        Làm mới thống kê
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Files -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>
+                    File gần đây
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-file-audio me-1"></i>Tên file</th>
+                                <th><i class="fas fa-weight me-1"></i>Kích thước</th>
+                                <th><i class="fas fa-clock me-1"></i>Thời gian upload</th>
+                                <th><i class="fas fa-cogs me-1"></i>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-files">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">
+                                    <i class="fas fa-spinner fa-spin me-2"></i>
+                                    Đang tải danh sách file...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Kiểm tra trạng thái server khi trang load
+document.addEventListener('DOMContentLoaded', function() {
+    checkServerStatus();
+    loadRecentFiles();
+    refreshStats();
+});
+
+function checkServerStatus() {
+    fetch('/api/server-status')
+        .then(response => response.json())
+        .then(data => {
+            const statusElement = document.getElementById('server-status');
+            if (data.running) {
+                statusElement.innerHTML = '<span class="badge bg-success">Đang chạy</span>';
+            } else {
+                statusElement.innerHTML = '<span class="badge bg-danger">Đã dừng</span>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('server-status').innerHTML = '<span class="badge bg-warning">Lỗi kết nối</span>';
+        });
+}
+
+function startServer() {
+    fetch('/api/start-server', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            setTimeout(checkServerStatus, 1000);
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'Lỗi khi khởi động server');
+    });
+}
+
+function stopServer() {
+    fetch('/api/stop-server', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            setTimeout(checkServerStatus, 1000);
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'Lỗi khi dừng server');
+    });
+}
+
+function loadRecentFiles() {
+    fetch('/api/files')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('recent-files');
+            if (data.files && data.files.length > 0) {
+                const recentFiles = data.files.slice(0, 5); // Chỉ hiển thị 5 file gần nhất
+                tbody.innerHTML = recentFiles.map(file => `
+                    <tr>
+                        <td><i class="fas fa-file-audio text-primary me-2"></i>${file.name}</td>
+                        <td>${formatFileSize(file.size)}</td>
+                        <td>${new Date(file.modified * 1000).toLocaleString('vi-VN')}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="downloadFile('${file.name}')">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteFile('${file.name}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Không có file nào</td></tr>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('recent-files').innerHTML = '<tr><td colspan="4" class="text-center text-danger">Lỗi khi tải danh sách file</td></tr>';
+        });
+}
+
+function refreshStats() {
+    fetch('/api/files')
+        .then(response => response.json())
+        .then(data => {
+            if (data.files) {
+                const totalFiles = data.files.length;
+                const totalSize = data.files.reduce((sum, file) => sum + file.size, 0);
+                const avgSize = totalFiles > 0 ? totalSize / totalFiles : 0;
+                
+                document.getElementById('total-files').textContent = totalFiles;
+                document.getElementById('total-size').textContent = formatFileSize(totalSize);
+                document.getElementById('avg-size').textContent = formatFileSize(avgSize);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+function downloadFile(filename) {
+    window.open(`/api/download-file/${filename}`, '_blank');
+}
+
+function deleteFile(filename) {
+    if (confirm(`Bạn có chắc muốn xóa file "${filename}"?`)) {
+        fetch('/api/delete-file', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ filename: filename })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                loadRecentFiles();
+                refreshStats();
+            } else {
+                showAlert('danger', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('danger', 'Lỗi khi xóa file');
+        });
+    }
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('main');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,350 @@
+{% extends "server_base.html" %}
+
+{% block title %}Quản lý File - Spotify Cloud Server{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Header -->
+    <div class="col-12 mb-4">
+        <div class="card bg-gradient-info text-white">
+            <div class="card-body text-center py-4">
+                <h2 class="mb-3">
+                    <i class="fas fa-folder me-3"></i>
+                    Quản lý File Âm thanh
+                </h2>
+                <p class="lead mb-0">
+                    Xem, tải xuống và xóa các file âm thanh được lưu trữ trên server
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Statistics -->
+    <div class="col-12 mb-4">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-file-audio fa-2x mb-2"></i>
+                        <h4 id="total-files">0</h4>
+                        <small>Tổng số file</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-hdd fa-2x mb-2"></i>
+                        <h4 id="total-size">0 MB</h4>
+                        <small>Tổng dung lượng</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-dark">
+                    <div class="card-body text-center">
+                        <i class="fas fa-clock fa-2x mb-2"></i>
+                        <h4 id="newest-file">--</h4>
+                        <small>File mới nhất</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-line fa-2x mb-2"></i>
+                        <h4 id="avg-size">0 KB</h4>
+                        <small>Kích thước TB</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File List -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Danh sách File
+                </h5>
+                <div>
+                    <button class="btn btn-outline-light btn-sm" onclick="refreshFileList()">
+                        <i class="fas fa-sync me-1"></i>Làm mới
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th><i class="fas fa-file-audio me-1"></i>Tên file</th>
+                                <th><i class="fas fa-weight me-1"></i>Kích thước</th>
+                                <th><i class="fas fa-clock me-1"></i>Thời gian upload</th>
+                                <th><i class="fas fa-chart-bar me-1"></i>Loại file</th>
+                                <th><i class="fas fa-cogs me-1"></i>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="file-list">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">
+                                    <i class="fas fa-spinner fa-spin me-2"></i>
+                                    Đang tải danh sách file...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadFileList();
+    updateStatistics();
+});
+
+function loadFileList() {
+    fetch('/api/files')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('file-list');
+            if (data.files && data.files.length > 0) {
+                tbody.innerHTML = data.files.map(file => `
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-file-audio text-primary me-2"></i>
+                                <div>
+                                    <strong>${file.name}</strong>
+                                    <br><small class="text-muted">${getFileExtension(file.name).toUpperCase()}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">${formatFileSize(file.size)}</span>
+                        </td>
+                        <td>
+                            <small>${new Date(file.modified * 1000).toLocaleString('vi-VN')}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">${getFileType(file.name)}</span>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-outline-primary" onclick="downloadFile('${file.name}')" title="Tải xuống">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" onclick="viewFileInfo('${file.name}', ${file.size}, ${file.modified})" title="Thông tin">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteFile('${file.name}')" title="Xóa">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-5">
+                            <i class="fas fa-folder-open fa-3x mb-3 d-block"></i>
+                            <h5>Không có file nào</h5>
+                            <p class="text-muted">Chưa có file âm thanh nào được upload lên server</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('file-list').innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-danger py-5">
+                        <i class="fas fa-exclamation-triangle fa-3x mb-3 d-block"></i>
+                        <h5>Lỗi khi tải danh sách file</h5>
+                        <p class="text-muted">Không thể kết nối đến server</p>
+                    </td>
+                </tr>
+            `;
+        });
+}
+
+function updateStatistics() {
+    fetch('/api/files')
+        .then(response => response.json())
+        .then(data => {
+            if (data.files) {
+                const totalFiles = data.files.length;
+                const totalSize = data.files.reduce((sum, file) => sum + file.size, 0);
+                const avgSize = totalFiles > 0 ? totalSize / totalFiles : 0;
+                const newestFile = data.files.length > 0 ? data.files[0].name : '--';
+                
+                document.getElementById('total-files').textContent = totalFiles;
+                document.getElementById('total-size').textContent = formatFileSize(totalSize);
+                document.getElementById('avg-size').textContent = formatFileSize(avgSize);
+                document.getElementById('newest-file').textContent = newestFile;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+function refreshFileList() {
+    loadFileList();
+    updateStatistics();
+}
+
+function downloadFile(filename) {
+    window.open(`/api/download-file/${filename}`, '_blank');
+}
+
+function viewFileInfo(filename, size, modified) {
+    const modal = `
+        <div class="modal fade" id="fileInfoModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Thông tin File
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Tên file:</strong><br>
+                                <span class="text-muted">${filename}</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Kích thước:</strong><br>
+                                <span class="text-muted">${formatFileSize(size)}</span>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Loại file:</strong><br>
+                                <span class="text-muted">${getFileType(filename)}</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Thời gian upload:</strong><br>
+                                <span class="text-muted">${new Date(modified * 1000).toLocaleString('vi-VN')}</span>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-12">
+                                <strong>Đường dẫn:</strong><br>
+                                <span class="text-muted">uploads/${filename}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        <button type="button" class="btn btn-primary" onclick="downloadFile('${filename}')">
+                            <i class="fas fa-download me-1"></i>Tải xuống
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('fileInfoModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add new modal
+    document.body.insertAdjacentHTML('beforeend', modal);
+    
+    // Show modal
+    const modalElement = document.getElementById('fileInfoModal');
+    const bootstrapModal = new bootstrap.Modal(modalElement);
+    bootstrapModal.show();
+    
+    // Remove modal from DOM after hiding
+    modalElement.addEventListener('hidden.bs.modal', function() {
+        modalElement.remove();
+    });
+}
+
+function deleteFile(filename) {
+    if (confirm(`Bạn có chắc muốn xóa file "${filename}"?\n\nHành động này không thể hoàn tác!`)) {
+        fetch('/api/delete-file', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ filename: filename })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', `File "${filename}" đã được xóa thành công`);
+                loadFileList();
+                updateStatistics();
+            } else {
+                showAlert('danger', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('danger', 'Lỗi khi xóa file');
+        });
+    }
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function getFileExtension(filename) {
+    return filename.split('.').pop().toLowerCase();
+}
+
+function getFileType(filename) {
+    const ext = getFileExtension(filename);
+    const types = {
+        'mp3': 'MP3 Audio',
+        'wav': 'WAV Audio',
+        'm4a': 'M4A Audio',
+        'flac': 'FLAC Audio',
+        'ogg': 'OGG Audio'
+    };
+    return types[ext] || 'Unknown';
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('main');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
+{% endblock %} 

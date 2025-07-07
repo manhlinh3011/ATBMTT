@@ -1,0 +1,296 @@
+{% extends "client_base.html" %}
+
+{% block title %}Dashboard - Spotify Cloud Client{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Header -->
+    <div class="col-12 mb-4">
+        <div class="card bg-gradient-success text-white">
+            <div class="card-body text-center py-5">
+                <h1 class="display-4 mb-3">
+                    <i class="fab fa-spotify me-3"></i>
+                    Spotify Cloud Client
+                </h1>
+                <p class="lead mb-4">
+                    Upload và Download file âm thanh với bảo mật cao
+                </p>
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <i class="fas fa-lock fa-2x mb-2"></i>
+                        <h6>AES-GCM</h6>
+                        <small>Mã hóa file</small>
+                    </div>
+                    <div class="col-md-3">
+                        <i class="fas fa-key fa-2x mb-2"></i>
+                        <h6>RSA 1024-bit</h6>
+                        <small>Trao đổi khóa</small>
+                    </div>
+                    <div class="col-md-3">
+                        <i class="fas fa-shield-alt fa-2x mb-2"></i>
+                        <h6>SHA-512</h6>
+                        <small>Kiểm tra toàn vẹn</small>
+                    </div>
+                    <div class="col-md-3">
+                        <i class="fas fa-network-wired fa-2x mb-2"></i>
+                        <h6>Socket TCP</h6>
+                        <small>Giao thức truyền</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Server Connection Status -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-server me-2"></i>
+                    Kết nối Server
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="status-indicator me-3" id="server-status">
+                        <span class="badge bg-secondary">Đang kiểm tra...</span>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">Server Status</h6>
+                        <small class="text-muted">localhost:8888</small>
+                    </div>
+                </div>
+                <button class="btn btn-info btn-sm" onclick="checkServerStatus()">
+                    <i class="fas fa-sync me-1"></i>Kiểm tra
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Thao tác nhanh
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('upload') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-upload me-2"></i>
+                        Upload File Âm thanh
+                    </a>
+                    <a href="{{ url_for('download') }}" class="btn btn-outline-success">
+                        <i class="fas fa-download me-2"></i>
+                        Download File
+                    </a>
+                    <a href="{{ url_for('security') }}" class="btn btn-outline-warning">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Kiểm tra Bảo mật
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Available Files -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-music me-2"></i>
+                    File âm thanh có sẵn
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-file-audio me-1"></i>Tên file</th>
+                                <th><i class="fas fa-weight me-1"></i>Kích thước</th>
+                                <th><i class="fas fa-clock me-1"></i>Thời gian upload</th>
+                                <th><i class="fas fa-cogs me-1"></i>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="file-list">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">
+                                    <i class="fas fa-spinner fa-spin me-2"></i>
+                                    Đang tải danh sách file...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Features -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    Tính năng Bảo mật
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="security-feature">
+                            <i class="fas fa-lock fa-3x text-primary mb-2"></i>
+                            <h6>Mã hóa AES-GCM</h6>
+                            <small class="text-muted">
+                                Mã hóa file với khóa 256-bit và xác thực tích hợp
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="security-feature">
+                            <i class="fas fa-key fa-3x text-success mb-2"></i>
+                            <h6>Trao đổi khóa RSA</h6>
+                            <small class="text-muted">
+                                RSA 1024-bit PKCS#1 v1.5 để trao đổi session key
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="security-feature">
+                            <i class="fas fa-signature fa-3x text-warning mb-2"></i>
+                            <h6>Chữ ký số</h6>
+                            <small class="text-muted">
+                                RSA/SHA-512 để ký và xác thực metadata
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="security-feature">
+                            <i class="fas fa-search fa-3x text-danger mb-2"></i>
+                            <h6>Phát hiện sửa đổi</h6>
+                            <small class="text-muted">
+                                Tag AES-GCM và hash SHA-512 để phát hiện tampering
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Kiểm tra trạng thái server khi trang load
+document.addEventListener('DOMContentLoaded', function() {
+    checkServerStatus();
+    loadFileList();
+});
+
+function checkServerStatus() {
+    fetch('/api/server-status')
+        .then(response => response.json())
+        .then(data => {
+            const statusElement = document.getElementById('server-status');
+            if (data.running) {
+                statusElement.innerHTML = '<span class="badge bg-success">Đang chạy</span>';
+            } else {
+                statusElement.innerHTML = '<span class="badge bg-danger">Đã dừng</span>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('server-status').innerHTML = '<span class="badge bg-warning">Lỗi kết nối</span>';
+        });
+}
+
+function loadFileList() {
+    fetch('/api/files')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('file-list');
+            if (data.files && data.files.length > 0) {
+                tbody.innerHTML = data.files.map(file => `
+                    <tr>
+                        <td><i class="fas fa-file-audio text-primary me-2"></i>${file.name}</td>
+                        <td>${formatFileSize(file.size)}</td>
+                        <td>${new Date(file.modified * 1000).toLocaleString('vi-VN')}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="downloadFile('${file.name}')">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteFile('${file.name}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Không có file nào</td></tr>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('file-list').innerHTML = '<tr><td colspan="4" class="text-center text-danger">Lỗi khi tải danh sách file</td></tr>';
+        });
+}
+
+function downloadFile(filename) {
+    window.open(`/api/download-file/${filename}`, '_blank');
+}
+
+function deleteFile(filename) {
+    if (confirm(`Bạn có chắc muốn xóa file \"${filename}\"?`)) {
+        fetch('/api/delete-file', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ filename: filename })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                loadFileList();
+            } else {
+                showAlert('danger', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('danger', 'Lỗi khi xóa file');
+        });
+    }
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        <i class=\"fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2\"></i>
+        ${message}
+        <button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"alert\"></button>
+    `;
+    
+    const container = document.querySelector('main');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
+{% endblock %} 

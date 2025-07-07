@@ -1,0 +1,356 @@
+{% extends "client_base.html" %}
+
+{% block title %}Upload File - Spotify Cloud Client{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Header -->
+    <div class="col-12 mb-4">
+        <div class="card bg-gradient-primary text-white">
+            <div class="card-body text-center py-4">
+                <h2 class="mb-3">
+                    <i class="fas fa-upload me-3"></i>
+                    Upload File Âm thanh
+                </h2>
+                <p class="lead mb-0">
+                    Tải lên file âm thanh với bảo mật cao qua Socket TCP
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-cloud-upload-alt me-2"></i>
+                    Chọn File để Upload
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="fileInput" class="form-label">
+                            <i class="fas fa-file-audio me-1"></i>
+                            File âm thanh
+                        </label>
+                        <input type="file" class="form-control" id="fileInput" name="file" accept=".mp3,.wav,.m4a,.flac,.ogg" required>
+                        <div class="form-text">
+                            Hỗ trợ: MP3, WAV, M4A, FLAC, OGG (Tối đa 50MB)
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="simulateTampering">
+                            <label class="form-check-label" for="simulateTampering">
+                                <i class="fas fa-exclamation-triangle text-warning me-1"></i>
+                                Mô phỏng tấn công sửa đổi dữ liệu
+                            </label>
+                        </div>
+                        <div class="form-text">
+                            Chọn để test khả năng phát hiện tampering của hệ thống
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" id="uploadBtn">
+                            <i class="fas fa-upload me-2"></i>
+                            Upload File
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Status -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Trạng thái Upload
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="uploadStatus">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-cloud fa-3x mb-3"></i>
+                        <h6>Chưa có upload</h6>
+                        <small>Chọn file và nhấn Upload để bắt đầu</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Info -->
+        <div class="card mt-3">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    Bảo mật
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="security-step mb-2">
+                    <i class="fas fa-handshake text-primary me-2"></i>
+                    <small>Handshake & Key Exchange</small>
+                </div>
+                <div class="security-step mb-2">
+                    <i class="fas fa-lock text-success me-2"></i>
+                    <small>AES-GCM Encryption</small>
+                </div>
+                <div class="security-step mb-2">
+                    <i class="fas fa-signature text-warning me-2"></i>
+                    <small>Digital Signature</small>
+                </div>
+                <div class="security-step">
+                    <i class="fas fa-check-circle text-info me-2"></i>
+                    <small>Integrity Verification</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Progress -->
+    <div class="col-12 mt-4" id="uploadProgress" style="display: none;">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-spinner fa-spin me-2"></i>
+                    Đang Upload...
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="progress mb-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                </div>
+                <div class="text-center">
+                    <small class="text-muted" id="progressText">Đang chuẩn bị upload...</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Results -->
+    <div class="col-12 mt-4" id="uploadResults" style="display: none;">
+        <div class="card">
+            <div class="card-header" id="resultHeader">
+                <h5 class="mb-0">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Kết quả Upload
+                </h5>
+            </div>
+            <div class="card-body" id="resultBody">
+                <!-- Results will be populated here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadForm = document.getElementById('uploadForm');
+    const fileInput = document.getElementById('fileInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const uploadResults = document.getElementById('uploadResults');
+
+    uploadForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        handleUpload();
+    });
+
+    fileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            updateFileInfo(file);
+        }
+    });
+});
+
+function handleUpload() {
+    const fileInput = document.getElementById('fileInput');
+    const simulateTampering = document.getElementById('simulateTampering').checked;
+    const file = fileInput.files[0];
+
+    if (!file) {
+        showAlert('warning', 'Vui lòng chọn file để upload');
+        return;
+    }
+
+    // Check file size
+    if (file.size > 50 * 1024 * 1024) {
+        showAlert('danger', 'File quá lớn. Kích thước tối đa là 50MB');
+        return;
+    }
+
+    // Show progress
+    showUploadProgress();
+    
+    // Create FormData
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('simulate_tampering', simulateTampering);
+
+    // Update progress
+    updateProgress(10, 'Đang kết nối đến server...');
+
+    // Upload file
+    fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        updateProgress(100, 'Hoàn thành');
+        
+        setTimeout(() => {
+            hideUploadProgress();
+            showUploadResults(data);
+        }, 1000);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        updateProgress(0, 'Lỗi upload');
+        
+        setTimeout(() => {
+            hideUploadProgress();
+            showUploadResults({
+                success: false,
+                message: 'Lỗi kết nối đến server'
+            });
+        }, 1000);
+    });
+}
+
+function showUploadProgress() {
+    document.getElementById('uploadProgress').style.display = 'block';
+    document.getElementById('uploadResults').style.display = 'none';
+}
+
+function hideUploadProgress() {
+    document.getElementById('uploadProgress').style.display = 'none';
+}
+
+function updateProgress(percent, text) {
+    const progressBar = document.querySelector('.progress-bar');
+    const progressText = document.getElementById('progressText');
+    
+    progressBar.style.width = percent + '%';
+    progressBar.setAttribute('aria-valuenow', percent);
+    progressText.textContent = text;
+}
+
+function showUploadResults(data) {
+    const uploadResults = document.getElementById('uploadResults');
+    const resultHeader = document.getElementById('resultHeader');
+    const resultBody = document.getElementById('resultBody');
+
+    uploadResults.style.display = 'block';
+
+    if (data.success) {
+        resultHeader.className = 'card-header bg-success text-white';
+        resultHeader.innerHTML = '<h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>Upload Thành công</h5>';
+        
+        resultBody.innerHTML = `
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>
+                ${data.message}
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6><i class="fas fa-shield-alt me-2"></i>Thông tin Bảo mật</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-2"></i>Handshake thành công</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Trao đổi khóa RSA</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Mã hóa AES-GCM</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Chữ ký số xác thực</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Kiểm tra toàn vẹn</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6><i class="fas fa-info-circle me-2"></i>Chi tiết</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>Protocol:</strong> TCP Socket</li>
+                        <li><strong>Encryption:</strong> AES-GCM 256-bit</li>
+                        <li><strong>Key Exchange:</strong> RSA 1024-bit</li>
+                        <li><strong>Integrity:</strong> SHA-512</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+    } else {
+        resultHeader.className = 'card-header bg-danger text-white';
+        resultHeader.innerHTML = '<h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Upload Thất bại</h5>';
+        
+        let errorDetails = '';
+        if (data.security_error) {
+            errorDetails = `
+                <div class="alert alert-warning mt-3">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Lỗi Bảo mật</h6>
+                    <p><strong>Loại:</strong> ${data.security_error.type}</p>
+                    <p><strong>Chi tiết:</strong> ${data.security_error.details}</p>
+                </div>
+            `;
+        }
+        
+        resultBody.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                ${data.message}
+            </div>
+            ${errorDetails}
+        `;
+    }
+}
+
+function updateFileInfo(file) {
+    const uploadStatus = document.getElementById('uploadStatus');
+    
+    uploadStatus.innerHTML = `
+        <div class="text-center">
+            <i class="fas fa-file-audio fa-3x text-primary mb-3"></i>
+            <h6>${file.name}</h6>
+            <small class="text-muted">${formatFileSize(file.size)}</small>
+            <hr>
+            <div class="text-start">
+                <small><strong>Loại:</strong> ${file.type || 'Unknown'}</small><br>
+                <small><strong>Kích thước:</strong> ${formatFileSize(file.size)}</small><br>
+                <small><strong>Ngày sửa đổi:</strong> ${new Date(file.lastModified).toLocaleString('vi-VN')}</small>
+            </div>
+        </div>
+    `;
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('main');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
+{% endblock %} 

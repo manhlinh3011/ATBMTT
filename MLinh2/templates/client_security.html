@@ -1,0 +1,387 @@
+{% extends "client_base.html" %}
+
+{% block title %}Security Tests - Spotify Cloud Client{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Header -->
+    <div class="col-12 mb-4">
+        <div class="card bg-gradient-warning text-dark">
+            <div class="card-body text-center py-4">
+                <h2 class="mb-3">
+                    <i class="fas fa-shield-alt me-3"></i>
+                    Kiểm tra Bảo mật
+                </h2>
+                <p class="lead mb-0">
+                    Test các tính năng bảo mật: AES-GCM, RSA, SHA-512 và Socket Connection
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Tests -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-lock me-2"></i>
+                    Test AES-GCM Encryption
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="aesgcmInput" class="form-label">Dữ liệu test:</label>
+                    <input type="text" class="form-control" id="aesgcmInput" value="Hello World!" placeholder="Nhập dữ liệu để test">
+                </div>
+                <button class="btn btn-primary" onclick="testAESGCM()">
+                    <i class="fas fa-play me-1"></i>Test AES-GCM
+                </button>
+                <div id="aesgcmResult" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-key me-2"></i>
+                    Test RSA Encryption
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="rsaInput" class="form-label">Dữ liệu test:</label>
+                    <input type="text" class="form-control" id="rsaInput" value="Hello World!" placeholder="Nhập dữ liệu để test">
+                </div>
+                <button class="btn btn-success" onclick="testRSA()">
+                    <i class="fas fa-play me-1"></i>Test RSA
+                </button>
+                <div id="rsaResult" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-hashtag me-2"></i>
+                    Test SHA-512 Hash
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="sha512Input" class="form-label">Dữ liệu test:</label>
+                    <input type="text" class="form-control" id="sha512Input" value="Hello World!" placeholder="Nhập dữ liệu để test">
+                </div>
+                <button class="btn btn-warning" onclick="testSHA512()">
+                    <i class="fas fa-play me-1"></i>Test SHA-512
+                </button>
+                <div id="sha512Result" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-network-wired me-2"></i>
+                    Test Socket Connection
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">Kiểm tra kết nối Socket TCP đến server</p>
+                <button class="btn btn-info" onclick="testSocket()">
+                    <i class="fas fa-play me-1"></i>Test Socket
+                </button>
+                <div id="socketResult" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Overview -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Tổng quan Bảo mật
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="security-status" id="aesgcmStatus">
+                            <i class="fas fa-lock fa-3x text-secondary mb-2"></i>
+                            <h6>AES-GCM</h6>
+                            <small class="text-muted">Chưa test</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="security-status" id="rsaStatus">
+                            <i class="fas fa-key fa-3x text-secondary mb-2"></i>
+                            <h6>RSA</h6>
+                            <small class="text-muted">Chưa test</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="security-status" id="sha512Status">
+                            <i class="fas fa-hashtag fa-3x text-secondary mb-2"></i>
+                            <h6>SHA-512</h6>
+                            <small class="text-muted">Chưa test</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <div class="security-status" id="socketStatus">
+                            <i class="fas fa-network-wired fa-3x text-secondary mb-2"></i>
+                            <h6>Socket</h6>
+                            <small class="text-muted">Chưa test</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <button class="btn btn-primary btn-lg" onclick="runAllTests()">
+                        <i class="fas fa-play me-2"></i>Chạy tất cả Tests
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize security status
+    updateSecurityOverview();
+});
+
+function testAESGCM() {
+    const input = document.getElementById('aesgcmInput').value;
+    const resultDiv = document.getElementById('aesgcmResult');
+    
+    resultDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Đang test...</div>';
+    
+    fetch('/api/test-aesgcm', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ data: input })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-check-circle me-2"></i>Test thành công</h6>
+                    <small><strong>Original:</strong> ${data.original}</small><br>
+                    <small><strong>Encrypted:</strong> ${data.encrypted}</small><br>
+                    <small><strong>Decrypted:</strong> ${data.decrypted}</small>
+                </div>
+            `;
+            updateSecurityStatus('aesgcm', true);
+        } else {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-times-circle me-2"></i>Test thất bại</h6>
+                    <small>${data.message}</small>
+                </div>
+            `;
+            updateSecurityStatus('aesgcm', false);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        resultDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Lỗi</h6>
+                <small>Không thể kết nối đến server</small>
+            </div>
+        `;
+        updateSecurityStatus('aesgcm', false);
+    });
+}
+
+function testRSA() {
+    const input = document.getElementById('rsaInput').value;
+    const resultDiv = document.getElementById('rsaResult');
+    
+    resultDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Đang test...</div>';
+    
+    fetch('/api/test-rsa', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ data: input })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-check-circle me-2"></i>Test thành công</h6>
+                    <small><strong>Original:</strong> ${data.original}</small><br>
+                    <small><strong>Encrypted:</strong> ${data.encrypted}</small><br>
+                    <small><strong>Decrypted:</strong> ${data.decrypted}</small><br>
+                    <small><strong>Signature Valid:</strong> ${data.signature_valid ? 'Yes' : 'No'}</small>
+                </div>
+            `;
+            updateSecurityStatus('rsa', true);
+        } else {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-times-circle me-2"></i>Test thất bại</h6>
+                    <small>${data.message}</small>
+                </div>
+            `;
+            updateSecurityStatus('rsa', false);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        resultDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Lỗi</h6>
+                <small>Không thể kết nối đến server</small>
+            </div>
+        `;
+        updateSecurityStatus('rsa', false);
+    });
+}
+
+function testSHA512() {
+    const input = document.getElementById('sha512Input').value;
+    const resultDiv = document.getElementById('sha512Result');
+    
+    resultDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Đang test...</div>';
+    
+    fetch('/api/test-sha512', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ data: input })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-check-circle me-2"></i>Test thành công</h6>
+                    <small><strong>Original:</strong> ${data.original}</small><br>
+                    <small><strong>Hash:</strong> ${data.hash}</small><br>
+                    <small><strong>Verification:</strong> ${data.verification ? 'Valid' : 'Invalid'}</small>
+                </div>
+            `;
+            updateSecurityStatus('sha512', true);
+        } else {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-times-circle me-2"></i>Test thất bại</h6>
+                    <small>${data.message}</small>
+                </div>
+            `;
+            updateSecurityStatus('sha512', false);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        resultDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Lỗi</h6>
+                <small>Không thể kết nối đến server</small>
+            </div>
+        `;
+        updateSecurityStatus('sha512', false);
+    });
+}
+
+function testSocket() {
+    const resultDiv = document.getElementById('socketResult');
+    
+    resultDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Đang test...</div>';
+    
+    fetch('/api/test-socket', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-check-circle me-2"></i>Test thành công</h6>
+                    <small>${data.message}</small>
+                </div>
+            `;
+            updateSecurityStatus('socket', true);
+        } else {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-times-circle me-2"></i>Test thất bại</h6>
+                    <small>${data.message}</small>
+                </div>
+            `;
+            updateSecurityStatus('socket', false);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        resultDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Lỗi</h6>
+                <small>Không thể kết nối đến server</small>
+            </div>
+        `;
+        updateSecurityStatus('socket', false);
+    });
+}
+
+function runAllTests() {
+    // Run all tests sequentially
+    testAESGCM();
+    setTimeout(() => testRSA(), 1000);
+    setTimeout(() => testSHA512(), 2000);
+    setTimeout(() => testSocket(), 3000);
+}
+
+function updateSecurityStatus(type, success) {
+    const statusDiv = document.getElementById(type + 'Status');
+    const icon = statusDiv.querySelector('i');
+    const statusText = statusDiv.querySelector('small');
+    
+    if (success) {
+        icon.className = 'fas fa-' + getIconForType(type) + ' fa-3x text-success mb-2';
+        statusText.className = 'text-success';
+        statusText.textContent = 'Thành công';
+    } else {
+        icon.className = 'fas fa-' + getIconForType(type) + ' fa-3x text-danger mb-2';
+        statusText.className = 'text-danger';
+        statusText.textContent = 'Thất bại';
+    }
+}
+
+function getIconForType(type) {
+    const icons = {
+        'aesgcm': 'lock',
+        'rsa': 'key',
+        'sha512': 'hashtag',
+        'socket': 'network-wired'
+    };
+    return icons[type] || 'question';
+}
+
+function updateSecurityOverview() {
+    // This function can be used to update the overall security status
+    // For now, it's just a placeholder
+}
+</script>
+{% endblock %} 
